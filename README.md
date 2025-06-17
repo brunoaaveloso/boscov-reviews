@@ -36,25 +36,7 @@ Este repositório contém o código-fonte de um aplicativo web desenvolvido com 
 
 ---
 
- 📦 Como implantar este projeto
 
-1. Crie a versão de produção:
-   npm run build
-
-2. Faça o deploy enviando a pasta `dist/` (ou o diretório configurado) para o serviço de sua preferência, por exemplo:
-
-   * Netlify
-   * Vercel
-   * GitHub Pages
-   * AWS S3
-
----
-
-.env
-DATABASE_URL="postgresql://postgres:senhaaqui@localhost:5432/nomedoschema?schema=public"
-JWT_SECRET=secret
-JWT_EXPIRES_IN=1d
-JWT_COOKIE_EXPIRES_IN=1d
 
 
 

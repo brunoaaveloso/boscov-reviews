@@ -39,6 +39,7 @@ model Filme {
   sinopse        String
   generos        GeneroFilme[]
   avaliacoes     Avaliacao[]
+  ativo          Boolean      @default(true)
 }
 
 model Genero {

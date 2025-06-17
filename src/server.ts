@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import filmeRoutes from './api/routes/filmeRoutes';
 import authRoutes from './api/routes/authRoutes';
 import generoRoutes from './api/routes/generoRoutes';
+import usuarioRoutes from './api/routes/usuarioRoutes';
 import { errorHandler } from './api/middlewares/errorHandler';
 
 // Carregar variáveis de ambiente
@@ -24,7 +25,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: ['http://localhost:8080', 'http://localhost:5173'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -51,6 +52,7 @@ if (fs.existsSync(swaggerPath)) {
 app.use('/filmes', filmeRoutes);
 app.use('/auth', authRoutes);
 app.use('/generos', generoRoutes);
+app.use('/usuarios', usuarioRoutes);
 
 // Rota raiz
 app.get('/', (_req: Request, res: Response) => {

@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 const JWT_COOKIE_EXPIRES_IN = process.env.JWT_COOKIE_EXPIRES_IN || '1d';
 
-// Schemas de validação
+// Schemas de validação com o zod
 const usuarioLoginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
@@ -27,8 +27,8 @@ const usuarioCadastroSchema = z.object({
 
 export class AuthController {
   // Função para criar token JWT
-  private createToken(userId: number, email: string, nome: string): string {
-    const payload = { userId, email, nome };
+  private createToken(userId: number, email: string, nome: string, tipoUsuario: string): string {
+    const payload = { userId, email, nome, tipoUsuario };
     const options = { 
       expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']
     };
@@ -57,13 +57,16 @@ export class AuthController {
       if (!usuario) {
         throw new AppError('Credenciais inválidas', 401);
       }
+      if (!usuario.status) {
+        throw new AppError('Usuário inativo. Contate o administrador.', 403);
+      }
       
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       if (!senhaValida) {
         throw new AppError('Credenciais inválidas', 401);
       }
 
-      const token = this.createToken(usuario.id, usuario.email, usuario.nome);
+      const token = this.createToken(usuario.id, usuario.email, usuario.nome, usuario.tipoUsuario);
       this.sendTokenCookie(res, token);
       res.json({ token });
     } catch (error) {
@@ -94,7 +97,7 @@ export class AuthController {
           tipoUsuario: 'USUARIO',
         }
       });
-      const token = this.createToken(novoUsuario.id, novoUsuario.email, novoUsuario.nome);
+      const token = this.createToken(novoUsuario.id, novoUsuario.email, novoUsuario.nome, novoUsuario.tipoUsuario);
       this.sendTokenCookie(res, token);
       res.status(201).json({ usuario: novoUsuario, token });
     } catch (error) {

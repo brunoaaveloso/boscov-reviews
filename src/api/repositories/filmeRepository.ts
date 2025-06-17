@@ -3,8 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class FilmeRepository {
-  async findAll() {
+  async findAll({ incluirInativos = false } = {}) {
     return prisma.filme.findMany({
+      where: incluirInativos ? {} : { ativo: true },
       include: {
         generos: {
           include: {
@@ -110,14 +111,18 @@ export class FilmeRepository {
   }
 
   async delete(id: number) {
-    // Primeiro, remove todas as relações de gêneros
-    await prisma.generoFilme.deleteMany({
-      where: { filmeId: id }
+    // Deleção lógica: marca como inativo
+    return prisma.filme.update({
+      where: { id },
+      data: { ativo: false }
     });
+  }
 
-    // Depois, remove o filme
-    return prisma.filme.delete({
-      where: { id }
+  async restore(id: number) {
+    // Restaura um filme inativo
+    return prisma.filme.update({
+      where: { id },
+      data: { ativo: true }
     });
   }
 } 

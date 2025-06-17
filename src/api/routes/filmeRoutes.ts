@@ -21,5 +21,6 @@ router.delete('/avaliacoes/:id', autenticarJWT, avaliacaoController.deletar.bind
 router.post('/', autenticarJWT, filmeController.criar.bind(filmeController) as RequestHandler);
 router.put('/:id', autenticarJWT, filmeController.atualizar.bind(filmeController) as RequestHandler);
 router.delete('/:id', autenticarJWT, filmeController.deletar.bind(filmeController) as RequestHandler);
+router.patch('/:id/restaurar', autenticarJWT, filmeController.restaurar.bind(filmeController) as RequestHandler);
 
 export default router; 

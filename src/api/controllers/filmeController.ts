@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { FilmeRepository } from '../repositories/filmeRepository';
+import { Request, Response, NextFunction } from "express";
+import { FilmeRepository } from "../repositories/filmeRepository";
 
 const filmeRepository = new FilmeRepository();
 
@@ -13,23 +13,38 @@ interface JwtPayload {
 type AuthRequest = Request & { user?: JwtPayload };
 
 export class FilmeController {
-  async listarTodos(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async listarAtivos(req: Request, res: Response, next: NextFunction) {
     try {
-      // ADMIN pode ver todos, usuário comum só ativos
-      const incluirInativos = req.user && req.user.tipoUsuario === 'ADMIN';
-      const filmes = await filmeRepository.findAll({ incluirInativos });
+      const filmes = await filmeRepository.findAll({ incluirInativos: false });
       res.json(filmes);
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(err);
     }
   }
 
-  async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async listarTodos(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.user || req.user.tipoUsuario !== "ADMIN") {
+        res.status(403).json({ error: "Acesso restrito a administradores." });
+        return;
+      }
+      const filmes = await filmeRepository.findAll({ incluirInativos: true });
+      res.json(filmes);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async buscarPorId(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { id } = req.params;
       const filme = await filmeRepository.findById(Number(id));
       if (!filme) {
-        res.status(404).json({ error: 'Filme não encontrado' });
+        res.status(404).json({ error: "Filme não encontrado" });
         return;
       }
       res.json(filme);
@@ -38,7 +53,11 @@ export class FilmeController {
     }
   }
 
-  async buscarPorGenero(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async buscarPorGenero(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { generoId } = req.params;
       const filmes = await filmeRepository.findByGenero(Number(generoId));
@@ -57,11 +76,17 @@ export class FilmeController {
     }
   }
 
-  async atualizar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async atualizar(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       // Só ADMIN pode editar
-      if (!req.user || req.user.tipoUsuario !== 'ADMIN') {
-        res.status(403).json({ error: 'Apenas administradores podem editar filmes.' });
+      if (!req.user || req.user.tipoUsuario !== "ADMIN") {
+        res
+          .status(403)
+          .json({ error: "Apenas administradores podem editar filmes." });
         return;
       }
       const { id } = req.params;
@@ -72,11 +97,17 @@ export class FilmeController {
     }
   }
 
-  async deletar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async deletar(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       // Só ADMIN pode deletar
-      if (!req.user || req.user.tipoUsuario !== 'ADMIN') {
-        res.status(403).json({ error: 'Apenas administradores podem deletar filmes.' });
+      if (!req.user || req.user.tipoUsuario !== "ADMIN") {
+        res
+          .status(403)
+          .json({ error: "Apenas administradores podem deletar filmes." });
         return;
       }
       const { id } = req.params;
@@ -87,11 +118,17 @@ export class FilmeController {
     }
   }
 
-  async restaurar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async restaurar(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       // Só ADMIN pode restaurar
-      if (!req.user || req.user.tipoUsuario !== 'ADMIN') {
-        res.status(403).json({ error: 'Apenas administradores podem restaurar filmes.' });
+      if (!req.user || req.user.tipoUsuario !== "ADMIN") {
+        res
+          .status(403)
+          .json({ error: "Apenas administradores podem restaurar filmes." });
         return;
       }
       const { id } = req.params;
@@ -101,4 +138,4 @@ export class FilmeController {
       next(error);
     }
   }
-} 
+}

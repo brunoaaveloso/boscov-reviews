@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -9,15 +9,15 @@ export class FilmeRepository {
       include: {
         generos: {
           include: {
-            genero: true
-          }
+            genero: true,
+          },
         },
         avaliacoes: {
           include: {
-            usuario: true
-          }
-        }
-      }
+            usuario: true,
+          },
+        },
+      },
     });
   }
 
@@ -27,15 +27,15 @@ export class FilmeRepository {
       include: {
         generos: {
           include: {
-            genero: true
-          }
+            genero: true,
+          },
         },
         avaliacoes: {
           include: {
-            usuario: true
-          }
-        }
-      }
+            usuario: true,
+          },
+        },
+      },
     });
   }
 
@@ -44,18 +44,18 @@ export class FilmeRepository {
       where: {
         generos: {
           some: {
-            generoId
-          }
-        }
+            generoId,
+          },
+        },
       },
       include: {
         generos: {
           include: {
-            genero: true
-          }
+            genero: true,
+          },
         },
-        avaliacoes: true
-      }
+        avaliacoes: true,
+      },
     });
   }
 
@@ -66,47 +66,57 @@ export class FilmeRepository {
         generos: {
           create: data.generos.map((generoId: number) => ({
             genero: {
-              connect: { id: generoId }
-            }
-          }))
-        }
+              connect: { id: generoId },
+            },
+          })),
+        },
       },
       include: {
         generos: {
           include: {
-            genero: true
-          }
+            genero: true,
+          },
         },
-        avaliacoes: true
-      }
+        avaliacoes: true,
+      },
     });
   }
 
   async update(id: number, data: any) {
-    // Primeiro, remove todas as relações de gêneros existentes
-    await prisma.generoFilme.deleteMany({
-      where: { filmeId: id }
-    });
+    // Limpar dados inválidos
+    const {
+      id: _ignoredId,
+      avaliacoes: _ignoredAvaliacoes,
+      generos,
+      ...camposValidos
+    } = data;
+
+    // Apaga relações de gêneros existentes
+    await prisma.generoFilme.deleteMany({ where: { filmeId: id } });
 
     return prisma.filme.update({
       where: { id },
       data: {
-        ...data,
-        generos: {
-          create: data.generos.map((generoId: number) => ({
-            genero: {
-              connect: { id: generoId }
+        ...camposValidos,
+        ...(Array.isArray(generos) && generos.length > 0
+          ? {
+              generos: {
+                create: generos.map((generoId: number) => ({
+                  genero: {
+                    connect: { id: generoId },
+                  },
+                })),
+              },
             }
-          }))
-        }
+          : {}),
       },
       include: {
         generos: {
           include: {
-            genero: true
-          }
-        }
-      }
+            genero: true,
+          },
+        },
+      },
     });
   }
 
@@ -114,7 +124,7 @@ export class FilmeRepository {
     // Deleção lógica: marca como inativo
     return prisma.filme.update({
       where: { id },
-      data: { ativo: false }
+      data: { ativo: false },
     });
   }
 
@@ -122,7 +132,7 @@ export class FilmeRepository {
     // Restaura um filme inativo
     return prisma.filme.update({
       where: { id },
-      data: { ativo: true }
+      data: { ativo: true },
     });
   }
-} 
+}

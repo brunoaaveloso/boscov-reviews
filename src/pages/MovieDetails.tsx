@@ -11,37 +11,13 @@ import { ArrowLeft, Clock, Calendar, User } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'sonner';
-
-interface Filme {
-  id: number;
-  nome: string;
-  poster: string;
-  anoLancamento: number;
-  diretor: string;
-  duracao: number;
-  sinopse: string;
-  generos: {
-    genero: {
-      id: number;
-      descricao: string;
-    };
-  }[];
-  avaliacoes: {
-    id: number;
-    nota: number;
-    comentario: string;
-    usuario: {
-      id: number;
-      nome: string;
-    };
-  }[];
-}
+import { movieService, Movie, Review } from '@/services/movieService';
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isLoggedIn, token } = useAuth();
-  const [filme, setFilme] = useState<Filme | null>(null);
+  const [filme, setFilme] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userRating, setUserRating] = React.useState(0);
@@ -51,11 +27,8 @@ const MovieDetails = () => {
   useEffect(() => {
     const fetchFilme = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/filmes/${id}`);
-        if (!response.ok) {
-          throw new Error('Filme não encontrado');
-        }
-        const data = await response.json();
+        if (!id) throw new Error('ID do filme não encontrado');
+        const data = await movieService.getMovieById(id);
         setFilme(data);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Erro ao carregar filme');
@@ -77,13 +50,15 @@ const MovieDetails = () => {
       if (filme && filme.avaliacoes) {
         userAvaliacao = filme.avaliacoes.find(av => av.usuario.id === usuarioId);
       }
-    } catch {}
+    } catch (error) {
+      console.error('Erro ao decodificar token:', error);
+    }
   }
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isLoggedIn || !token) {
+    if (!isLoggedIn || !token || !id) {
       toast.error('Você precisa estar logado para fazer uma avaliação');
       return;
     }
@@ -99,33 +74,16 @@ const MovieDetails = () => {
         throw new Error('ID do usuário não encontrado no token');
       }
 
-      console.log('Enviando avaliação:', {
+      const review: Review = {
         nota: userRating,
         comentario: reviewComment,
-        usuarioId,
-        filmeId: id
-      });
+        usuarioId
+      };
 
-      const response = await fetch(`http://localhost:3001/filmes/${id}/avaliacoes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          nota: userRating,
-          comentario: reviewComment,
-          usuarioId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Erro ao enviar avaliação');
-      }
-
+      await movieService.addReview(id, review, token);
+      
       // Atualizar a lista de avaliações
-      const updatedFilme = await fetch(`http://localhost:3001/filmes/${id}`).then(res => res.json());
+      const updatedFilme = await movieService.getMovieById(id);
       setFilme(updatedFilme);
       
       // Limpar o formulário
@@ -254,23 +212,14 @@ const MovieDetails = () => {
                       e.preventDefault();
                       setSubmitting(true);
                       try {
-                        const response = await fetch(`http://localhost:3001/filmes/${id}/avaliacoes/${userAvaliacao.id}`, {
-                          method: 'PUT',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                          },
-                          body: JSON.stringify({
-                            nota: userRating,
-                            comentario: reviewComment,
-                            usuarioId
-                          })
-                        });
-                        if (!response.ok) {
-                          const errorData = await response.json().catch(() => ({}));
-                          throw new Error(errorData.error || 'Erro ao editar avaliação');
-                        }
-                        const updatedFilme = await fetch(`http://localhost:3001/filmes/${id}`).then(res => res.json());
+                        if (!id) throw new Error('ID do filme não encontrado');
+                        const review: Review = {
+                          nota: userRating,
+                          comentario: reviewComment,
+                          usuarioId: usuarioId!
+                        };
+                        await movieService.updateReview(id, userAvaliacao.id, review, token!);
+                        const updatedFilme = await movieService.getMovieById(id);
                         setFilme(updatedFilme);
                         toast.success('Avaliação editada com sucesso!');
                       } catch (error) {

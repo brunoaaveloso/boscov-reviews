@@ -2,82 +2,32 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { jwtDecode } from "jwt-decode";
+import Header from '@/components/Header';
+
+interface DecodedToken {
+  userId: number;
+  email: string;
+  nome: string;
+}
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { isLoggedIn, token, logout } = useAuth();
   let userName = '';
+  
   if (isLoggedIn && token) {
     try {
-      const decoded: any = jwtDecode(token);
+      const decoded = jwtDecode<DecodedToken>(token);
       userName = decoded.nome || decoded.email;
-    } catch {}
+    } catch (error) {
+      console.error('Erro ao decodificar token:', error);
+    }
   }
 
   return (
     <div className="bg-black text-white font-sans">
-      {/* Header */}
-      <header className="bg-black sticky top-0 z-50 border-b border-gray-800">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-6">
-            <a href="/" className="flex items-center space-x-2 group">
-              <span className="text-xl font-bold text-amber-500 group-hover:text-amber-400 transition-colors">
-                BoscovFilmes
-              </span>
-              <i className="fa-solid fa-film text-amber-500 group-hover:text-amber-400 transition-colors"></i>
-            </a>
-            <nav className="hidden md:flex space-x-4">
-              {/* <a href="/" className="px-2 py-1 hover:text-amber-400 transition-colors">Início</a> */}
-              <a href="/filmes" className="px-2 py-1 hover:text-amber-400 transition-colors">Catálogo</a>
-              <a href="/generos" className="px-2 py-1 hover:text-amber-400 transition-colors">Gêneros</a>
-              <a href="/lancamentos" className="px-2 py-1 hover:text-amber-400 transition-colors">Lançamentos</a>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative group">
-              <input
-                type="text"
-                placeholder="Buscar filmes..."
-                className="bg-gray-900 rounded-full px-4 py-1 w-[200px] md:w-[250px] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-              />
-              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-amber-400 transition-colors">
-                <span className="material-symbols-outlined text-sm">search</span>
-              </button>
-            </div>
-            {isLoggedIn ? (
-              <>
-                {userName && (
-                  <span className="hidden md:inline text-sm text-gray-300 mr-2">Bem-vindo, {userName}</span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate('/profile')}
-                  className="rounded-full"
-                >
-                  <i className="fa-solid fa-user text-xl"></i>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { logout(); }}
-                  className="border-gray-600"
-                >
-                  Sair
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => navigate("/login")}
-                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 rounded transition-colors text-sm"
-              >
-                Entrar
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header />
 
-      {/* Hero Section */}
       <section className="relative h-[600px] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black z-0">
           <img
@@ -103,12 +53,6 @@ export function LandingPage() {
               >
                 Explorar Catálogo
               </Button>
-              <Button
-                onClick={() => navigate("/register")}
-                className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-md font-bold transform hover:scale-105 transition-all duration-300"
-              >
-                Criar Conta
-              </Button>
             </div>
           </div>
         </div>
@@ -121,7 +65,7 @@ export function LandingPage() {
             <div>
               <h3 className="text-xl font-bold text-amber-500 mb-4">BoscovFilmes</h3>
               <p className="text-gray-400 mb-4">
-                A sua plataforma de streaming com os melhores filmes e séries em um só lugar.
+                A sua plataforma de avaliações com os melhores filmes e séries em um só lugar.
               </p>
               <div className="flex space-x-4">
                 <a href="#" className="text-gray-400 hover:text-amber-500 transition-colors">
@@ -140,8 +84,6 @@ export function LandingPage() {
               <ul className="space-y-2">
                 <li><a href="/" className="text-gray-400 hover:text-amber-500 transition-colors">Início</a></li>
                 <li><a href="/filmes" className="text-gray-400 hover:text-amber-500 transition-colors">Catálogo</a></li>
-                <li><a href="/lancamentos" className="text-gray-400 hover:text-amber-500 transition-colors">Lançamentos</a></li>
-                <li><a href="/minha-lista" className="text-gray-400 hover:text-amber-500 transition-colors">Minha Lista</a></li>
               </ul>
             </div>
           </div>

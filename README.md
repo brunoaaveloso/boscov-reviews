@@ -6,62 +6,77 @@ Este repositório contém o código-fonte de um aplicativo web desenvolvido com 
 
 ---
 
-🚀 Como editar este código
+## 🚀 Como rodar este projeto localmente
 
-1. Usando sua IDE preferida
+### 1. Clone o repositório
 
-2. Clone o repositório:
-   
-   git clone https://github.com/Kitotsui/boscov-reviews.git
-   
-   cd boscov-reviews
+```bash
+git clone https://github.com/Kitotsui/boscov-reviews.git
+cd boscov-reviews
+```
 
-4. Instale as dependências:
-   
-   npm install
+### 2. Instale as dependências
 
-6. Crie o arquivo .env na raiz do projeto.
+```bash
+npm install
+```
 
-7. Se houver alguma alteração no schema do Prisma, executar:
-   
-   npx prisma migrate dev
+### 3. Configure as variáveis de ambiente
 
-   Caso o banco não esteja populado ainda, executar:
-   
-   !ATENÇÃO, O COMANDO A SEGUIR IRÁ LIMPAR O BANCO!
-   
-   npx prisma db seed
+Crie um arquivo `.env` na raiz do projeto e configure suas variáveis de ambiente (você pode usar um arquivo `.env.example` como base).
 
-8. Inicie o servidor de desenvolvimento:
+### 4. ⚠️ PULAR ESTA ETAPA! BANCO JÁ CONFIGURADO NO SUPABASE
 
-   npm run dev para o frontend
-   
-   npm run dev:server para o backend
+O banco de dados já está configurado e populado no Supabase, portanto **não é necessário rodar migrations ou seed localmente**.
 
-   Isso iniciará o projeto em modo de desenvolvimento com recarregamento automático.
+Caso haja alterações no schema do Prisma e você seja o responsável por aplicar as mudanças, pode executar:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+> **Atenção:** este comando cria e aplica migrations no banco e pode alterar dados existentes.
+
+Para popular o banco com dados iniciais (seed):
+
+```bash
+npx prisma db seed
+```
+
+> **Nota:** o comando `db seed` pode limpar dados existentes, use com cuidado.
+
+### 5. Gere o Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### 6. Inicie o projeto
+
+- Para rodar o frontend:
+
+```bash
+npm run dev
+```
+
+- Para rodar o backend:
+
+```bash
+npm run dev:server
+```
+
+O servidor iniciará em modo desenvolvimento com recarregamento automático (hot reload).
 
 ---
 
-🛠 Tecnologias utilizadas
+## 🛠 Tecnologias utilizadas
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
----
-
-📦 Como implantar este projeto
-
-1. Crie a versão de produção:
-   npm run build
-
-2. Faça o deploy enviando a pasta `dist/` (ou o diretório configurado) para o serviço de sua preferência, por exemplo:
-
-   - Netlify
-   - Vercel
-   - GitHub Pages
-   - AWS S3
+- Prisma
+- PostgreSQL
 
 ---

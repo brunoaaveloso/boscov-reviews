@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,68 +12,57 @@ interface HeaderProps {
   isLoggedIn?: boolean;
 }
 
-const Header = ({ onSearch, searchQuery = '', isLoggedIn = false }: HeaderProps) => {
+const Header: React.FC<HeaderProps> = ({ onSearch, searchQuery = '', isLoggedIn }) => {
   const navigate = useNavigate();
-  const [query, setQuery] = React.useState(searchQuery);
   const { logout, token } = useAuth();
   let userName = '';
-  if (isLoggedIn && token) {
+  let isAdmin = false;
+  if ((isLoggedIn === undefined || isLoggedIn) && token) {
     try {
       const decoded: any = jwtDecode(token);
       userName = decoded.nome || decoded.email;
+      isAdmin = decoded.tipoUsuario === 'ADMIN';
     } catch {}
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch) onSearch(query);
-  };
-
   return (
-    <header className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3">
-      <div className="container mx-auto max-w-7xl flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center space-x-2 mr-6">
-            <FilmIcon className="h-6 w-6" />
-            <span className="font-bold text-lg hidden sm:inline">BoscovFilmes</span>
-          </Link>
-          
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link to="/filmes" className="text-sm font-medium hover:text-primary">
-              Filmes
-            </Link>
-            <Link to="/top-rated" className="text-sm font-medium hover:text-primary">
-              Mais Avaliados
-            </Link>
-            <Link to="/genres" className="text-sm font-medium hover:text-primary">
-              Gêneros
-            </Link>
+    <header className="bg-black sticky top-0 z-50 border-b border-gray-800">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="flex items-center space-x-6">
+          <a href="/" className="flex items-center space-x-2 group">
+            <span className="text-xl font-bold text-amber-500 group-hover:text-amber-400 transition-colors">
+              BoscovFilmes
+            </span>
+            <i className="fa-solid fa-film text-amber-500 group-hover:text-amber-400 transition-colors"></i>
+          </a>
+          <nav className="hidden md:flex space-x-4">
+            <a href="/filmes" className="px-2 py-1 hover:text-amber-400 transition-colors">Filmes</a>
           </nav>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <form onSubmit={handleSearch} className="relative hidden md:block">
-            <Input
-              type="search"
-              placeholder="Buscar filmes..."
-              className="w-[200px] lg:w-[300px]"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <Button 
-              type="submit" 
-              variant="ghost" 
-              className="absolute right-0 top-0 h-full"
-              size="icon"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-          
-          {isLoggedIn ? (
+        <div className="flex items-center space-x-4">
+          {onSearch && (
+            <form onSubmit={e => { e.preventDefault(); onSearch && onSearch(searchQuery); }} className="relative group">
+              <input
+                type="text"
+                placeholder="Buscar filmes..."
+                value={searchQuery}
+                onChange={e => onSearch && onSearch(e.target.value)}
+                className="bg-gray-900 rounded-full px-4 py-1 w-[200px] md:w-[250px] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+              />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-amber-400 transition-colors"
+              >
+                <i className="fa fa-search" />
+              </Button>
+            </form>
+          )}
+          {token ? (
             <>
               {userName && (
-                <span className="hidden md:inline text-sm text-muted-foreground mr-2">Bem-vindo, {userName}</span>
+                <span className="hidden md:inline text-sm text-gray-300 mr-2">Bem-vindo, {userName}</span>
               )}
               <Button
                 variant="ghost"
@@ -81,18 +70,34 @@ const Header = ({ onSearch, searchQuery = '', isLoggedIn = false }: HeaderProps)
                 onClick={() => navigate('/profile')}
                 className="rounded-full"
               >
-                <UserCircle className="h-6 w-6" />
+                <i className="fa-solid fa-user text-xl"></i>
               </Button>
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate('/admin/usuarios')}
+                  className="px-3 py-1 bg-amber-700 hover:bg-amber-800 rounded transition-colors text-sm mr-2"
+                >
+                  Administração
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { logout(); navigate('/login'); }}
+                onClick={logout}
+                className="border-gray-600"
               >
                 Sair
               </Button>
             </>
           ) : (
-            <Button onClick={() => navigate('/login')}>Entrar</Button>
+            <>
+              <Button onClick={() => navigate('/login')} className="px-3 py-1 bg-amber-500 hover:bg-amber-600 rounded transition-colors text-sm">
+                Entrar
+              </Button>
+              <Button onClick={() => navigate('/login?tab=register')} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors text-sm">
+                Cadastrar
+              </Button>
+            </>
           )}
         </div>
       </div>

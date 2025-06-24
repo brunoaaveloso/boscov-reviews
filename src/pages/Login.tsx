@@ -1,105 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FilmIcon } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Link, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
+import { FilmIcon } from 'lucide-react';
+import { authService, LoginData, RegisterData } from '@/services/authService';
 
 const Login = () => {
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('login');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login: authLogin, isLoggedIn } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>("login");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  
-  const [loginForm, setLoginForm] = useState({
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const location = useLocation();
+
+  const [loginForm, setLoginForm] = useState<LoginData>({
     email: '',
-    password: '',
+    senha: ''
   });
-  
-  const [registerForm, setRegisterForm] = useState({
-    name: '',
+
+  const [registerForm, setRegisterForm] = useState<RegisterData>({
+    nome: '',
     email: '',
-    password: '',
-    confirmPassword: '',
-    birthDate: '',
+    senha: '',
+    dataNascimento: ''
   });
 
   const [registerErrors, setRegisterErrors] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate('/');
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'register') {
+      setActiveTab('register');
     }
-  }, [isLoggedIn, navigate]);
+  }, [location.search]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: loginForm.email,
-          senha: loginForm.password,
-        })
+      const data = await authService.login(loginForm);
+      login(data.token);
+      toast({
+        title: "Login com sucesso",
+        description: "Bem-vindo(a) de volta!",
       });
-      setIsLoading(false);
-      if (response.status === 200) {
-        const data = await response.json();
-        authLogin(data.token);
-        toast({
-          title: "Login com sucesso",
-          description: "Bem-vindo(a) de volta!",
-        });
-        navigate('/');
-      } else {
-        const data = await response.json();
-        let errorMsg = 'Erro desconhecido';
-        if (Array.isArray(data.error)) {
-          errorMsg = data.error.map((e: any) => e.message).join(' | ');
-        } else if (typeof data.error === 'object' && data.error?.message) {
-          errorMsg = data.error.message;
-        } else if (typeof data.error === 'string') {
-          errorMsg = data.error;
-        }
-        toast({
-          title: "Erro ao entrar",
-          description: errorMsg,
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      setIsLoading(false);
+      navigate('/');
+    } catch (error) {
       toast({
         title: "Erro ao entrar",
-        description: "Erro de conexão com o servidor",
+        description: error instanceof Error ? error.message : "Erro de conexão com o servidor",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   function validateRegisterForm() {
     const errors: {[key: string]: string} = {};
-    if (!registerForm.name || registerForm.name.trim().length < 2) {
-      errors.name = 'O nome deve ter pelo menos 2 caracteres';
+    if (!registerForm.nome || registerForm.nome.trim().length < 2) {
+      errors.nome = 'O nome deve ter pelo menos 2 caracteres';
     }
     if (!registerForm.email || !/^\S+@\S+\.\S+$/.test(registerForm.email)) {
       errors.email = 'E-mail inválido';
     }
-    if (!registerForm.password || registerForm.password.length < 6) {
-      errors.password = 'A senha deve ter pelo menos 6 caracteres';
+    if (!registerForm.senha || registerForm.senha.length < 6) {
+      errors.senha = 'A senha deve ter pelo menos 6 caracteres';
     }
-    if (registerForm.password !== registerForm.confirmPassword) {
-      errors.confirmPassword = 'As senhas não coincidem';
-    }
-    if (!registerForm.birthDate || isNaN(Date.parse(registerForm.birthDate))) {
-      errors.birthDate = 'Data de nascimento inválida';
+    if (!registerForm.dataNascimento || isNaN(Date.parse(registerForm.dataNascimento))) {
+      errors.dataNascimento = 'Data de nascimento inválida';
     }
     return errors;
   }
@@ -113,38 +88,20 @@ const Login = () => {
     }
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: registerForm.name,
-          email: registerForm.email,
-          senha: registerForm.password,
-          dataNascimento: registerForm.birthDate,
-        })
+      await authService.register(registerForm);
+      toast({
+        title: "Cadastro realizado",
+        description: "Sua conta foi criada com sucesso!",
       });
-      setIsLoading(false);
-      if (response.status === 201) {
-        toast({
-          title: "Cadastro realizado",
-          description: "Sua conta foi criada com sucesso!",
-        });
-        setActiveTab("login");
-      } else {
-        const data = await response.json();
-        toast({
-          title: "Erro de cadastro",
-          description: data.error ? data.error : 'Erro desconhecido',
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      setIsLoading(false);
+      setActiveTab("login");
+    } catch (error) {
       toast({
         title: "Erro de cadastro",
-        description: "Erro de conexão com o servidor",
+        description: error instanceof Error ? error.message : "Erro de conexão com o servidor",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,8 +152,8 @@ const Login = () => {
                     id="password" 
                     type="password" 
                     required
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                    value={loginForm.senha}
+                    onChange={(e) => setLoginForm({...loginForm, senha: e.target.value})}
                   />
                 </div>
               </CardContent>
@@ -225,10 +182,10 @@ const Login = () => {
                     id="name" 
                     placeholder="Seu nome completo" 
                     required
-                    value={registerForm.name}
-                    onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
+                    value={registerForm.nome}
+                    onChange={(e) => setRegisterForm({...registerForm, nome: e.target.value})}
                   />
-                  {registerErrors.name && <span className="text-red-500 text-xs">{registerErrors.name}</span>}
+                  {registerErrors.nome && <span className="text-red-500 text-xs">{registerErrors.nome}</span>}
                 </div>
                 
                 <div className="space-y-2">
@@ -250,34 +207,22 @@ const Login = () => {
                     id="register-password" 
                     type="password" 
                     required
-                    value={registerForm.password}
-                    onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+                    value={registerForm.senha}
+                    onChange={(e) => setRegisterForm({...registerForm, senha: e.target.value})}
                   />
-                  {registerErrors.password && <span className="text-red-500 text-xs">{registerErrors.password}</span>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Senha</Label>
-                  <Input 
-                    id="confirm-password" 
-                    type="password" 
-                    required
-                    value={registerForm.confirmPassword}
-                    onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})}
-                  />
-                  {registerErrors.confirmPassword && <span className="text-red-500 text-xs">{registerErrors.confirmPassword}</span>}
+                  {registerErrors.senha && <span className="text-red-500 text-xs">{registerErrors.senha}</span>}
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="birth-date">Data de Nascimento</Label>
-                  <Input
-                    id="birth-date"
-                    type="date"
+                  <Input 
+                    id="birth-date" 
+                    type="date" 
                     required
-                    value={registerForm.birthDate}
-                    onChange={(e) => setRegisterForm({...registerForm, birthDate: e.target.value})}
+                    value={registerForm.dataNascimento}
+                    onChange={(e) => setRegisterForm({...registerForm, dataNascimento: e.target.value})}
                   />
-                  {registerErrors.birthDate && <span className="text-red-500 text-xs">{registerErrors.birthDate}</span>}
+                  {registerErrors.dataNascimento && <span className="text-red-500 text-xs">{registerErrors.dataNascimento}</span>}
                 </div>
               </CardContent>
               

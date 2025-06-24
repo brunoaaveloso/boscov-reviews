@@ -23,7 +23,11 @@ const PORT = process.env.PORT || 3001;
 
 // Configurações de CORS
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  origin: [
+    'http://localhost:8080',       // para dev local
+    'http://localhost:5173',       // outro local dev, se usar
+    'https://boscov-reviews.vercel.app'  // seu frontend deployado na Vercel
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
